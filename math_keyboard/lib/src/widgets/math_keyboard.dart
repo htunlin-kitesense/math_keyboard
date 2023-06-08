@@ -1,8 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:math_keyboard/src/custom_key_icons/custom_key_icons.dart';
 import 'package:math_keyboard/src/foundation/keyboard_button.dart';
+import 'package:math_keyboard/src/foundation/node.dart';
+import 'package:cupertino_icons/cupertino_icons.dart';
 import 'package:math_keyboard/src/widgets/decimal_separator.dart';
 import 'package:math_keyboard/src/widgets/keyboard_button.dart';
 import 'package:math_keyboard/src/widgets/math_field.dart';
@@ -21,6 +24,9 @@ enum MathKeyboardType {
 
   /// Keyboard for number input only.
   numberOnly,
+
+  /// Keyboard for expresson + number + alphabets
+  all,
 }
 
 /// Widget displaying the math keyboard.
@@ -93,7 +99,7 @@ class MathKeyboard extends StatelessWidget {
             child: Material(
               type: MaterialType.transparency,
               child: ColoredBox(
-                color: Colors.black,
+                color: Colors.white,
                 child: SafeArea(
                   top: false,
                   child: _KeyboardBody(
@@ -103,33 +109,44 @@ class MathKeyboard extends StatelessWidget {
                     child: Padding(
                       padding: padding,
                       child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: 5e2,
-                          ),
-                          child: Column(
-                            children: [
-                              if (type != MathKeyboardType.numberOnly)
-                                _Variables(
-                                  controller: controller,
-                                  variables: variables,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                              border: Border(
+                                  top: BorderSide(
+                            color: KColor.highlight2,
+                            width: 1,
+                          ))),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                                // maxWidth: 5e2,
                                 ),
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 4,
+                            child: Column(
+                              children: [
+                                // if (type != MathKeyboardType.numberOnly)
+                                //   _Variables(
+                                //     controller: controller,
+                                //     variables: [],
+                                //   ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 4,
+                                  ),
+                                  child: _Buttons(
+                                    controller: controller,
+                                    page1: type == MathKeyboardType.numberOnly
+                                        ? numberKeyboard
+                                        : standardKeyboard,
+                                    page2: type == MathKeyboardType.numberOnly
+                                        ? null
+                                        : functionKeyboard,
+                                    page3: type == MathKeyboardType.numberOnly
+                                        ? null
+                                        : alphabetKeyboard,
+                                    onSubmit: onSubmit,
+                                  ),
                                 ),
-                                child: _Buttons(
-                                  controller: controller,
-                                  page1: type == MathKeyboardType.numberOnly
-                                      ? numberKeyboard
-                                      : standardKeyboard,
-                                  page2: type == MathKeyboardType.numberOnly
-                                      ? null
-                                      : functionKeyboard,
-                                  onSubmit: onSubmit,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -247,32 +264,39 @@ class _Variables extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 54,
+      height: 50,
       color: Colors.grey[900],
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
-          return ListView.separated(
-            itemCount: variables.length,
-            scrollDirection: Axis.horizontal,
-            separatorBuilder: (context, index) {
-              return Center(
-                child: Container(
-                  height: 24,
-                  width: 1,
-                  color: Colors.white,
+          return Row(
+            children: [
+              Expanded(
+                child: ListView.separated(
+                  itemCount: variables.length,
+                  scrollDirection: Axis.horizontal,
+                  separatorBuilder: (context, index) {
+                    return Center(
+                      child: Container(
+                        height: 24,
+                        width: 1,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
+                  itemBuilder: (context, index) {
+                    return SizedBox(
+                      width: 50,
+                      child: _VariableButton(
+                        name: variables[index],
+                        onTap: () =>
+                            controller.addLeaf('{${variables[index]}}'),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-            itemBuilder: (context, index) {
-              return SizedBox(
-                width: 56,
-                child: _VariableButton(
-                  name: variables[index],
-                  onTap: () => controller.addLeaf('{${variables[index]}}'),
-                ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),
@@ -288,6 +312,7 @@ class _Buttons extends StatelessWidget {
     required this.controller,
     this.page1,
     this.page2,
+    this.page3,
     this.onSubmit,
   }) : super(key: key);
 
@@ -301,80 +326,145 @@ class _Buttons extends StatelessWidget {
   /// The buttons to display.
   final List<List<KeyboardButtonConfig>>? page2;
 
+  /// The buttons to display for alphabet.
+  final List<List<KeyboardButtonConfig>>? page3;
+
   /// Function that is called when the enter / submit button is tapped.
   ///
   /// Can be `null`.
   final VoidCallback? onSubmit;
 
+  bool _isAlphabeticalChar(String character) {
+    if (character.length > 1 || character.isEmpty) return false;
+    var charCode = character.codeUnitAt(0);
+    return (charCode >= 65 && charCode <= 90) ||
+        (charCode >= 97 && charCode <= 122);
+  }
+
+  String _checkLabel(MathFieldEditingController controller, String label) {
+    if (_isAlphabeticalChar(label)) {
+      if (controller.isUpperCase) return label.toUpperCase();
+      return label.toLowerCase();
+    }
+    return label;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 230,
+      height: 205,
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
-          final layout =
-              controller.secondPage ? page2! : page1 ?? numberKeyboard;
+          final layout = controller.alphabetPage
+              ? page3!
+              : controller.secondPage
+                  ? page2!
+                  : page1 ?? numberKeyboard;
           return Column(
             children: [
               for (final row in layout)
                 SizedBox(
-                  height: 56,
+                  height: 50,
                   child: Row(
                     children: [
                       for (final config in row)
                         if (config is BasicKeyboardButtonConfig)
                           _BasicButton(
                             flex: config.flex,
-                            label: config.label,
+                            label: _checkLabel(controller, config.label),
                             onTap: config.args != null
                                 ? () => controller.addFunction(
                                       config.value,
                                       config.args!,
                                     )
-                                : () => controller.addLeaf(config.value),
+                                : () => controller.addLeaf(
+                                    _checkLabel(controller, config.value)),
                             asTex: config.asTex,
                             highlightLevel: config.highlighted ? 1 : 0,
                           )
                         else if (config is DeleteButtonConfig)
                           _NavigationButton(
                             flex: config.flex,
-                            icon: Icons.backspace,
+                            icon: Icons.backspace_outlined,
                             iconSize: 22,
                             onTap: () => controller.goBack(deleteMode: true),
+                          )
+                        else if (config is UppercaseConfig)
+                          _BasicButton(
+                            flex: config.flex,
+                            highlightLevel: controller.isUpperCase ? 2 : 1,
+                            icon: CupertinoIcons.shift,
+                            iconColor:
+                                controller.isUpperCase ? Colors.white : null,
+                            onTap: () => controller.toggleUpperCase(),
                           )
                         else if (config is PageButtonConfig)
                           _BasicButton(
                             flex: config.flex,
-                            icon: controller.secondPage
-                                ? null
-                                : CustomKeyIcons.key_symbols,
-                            label: controller.secondPage ? '123' : null,
+                            icon: CustomKeyIcons.key_symbols,
+                            iconColor:
+                                controller.secondPage ? Colors.white : null,
                             onTap: controller.togglePage,
-                            highlightLevel: 1,
+                            highlightLevel: controller.secondPage ? 2 : 1,
                           )
-                        else if (config is PreviousButtonConfig)
-                          _NavigationButton(
-                            flex: config.flex,
-                            icon: Icons.chevron_left_rounded,
-                            onTap: controller.goBack,
-                          )
-                        else if (config is NextButtonConfig)
-                          _NavigationButton(
-                            flex: config.flex,
-                            icon: Icons.chevron_right_rounded,
-                            onTap: controller.goNext,
-                          )
-                        else if (config is SubmitButtonConfig)
+                        else if (config is SpaceButtonConfig)
                           _BasicButton(
                             flex: config.flex,
-                            icon: Icons.keyboard_return,
-                            onTap: onSubmit,
-                            highlightLevel: 2,
+                            icon: Icons.space_bar,
+                            onTap: () => controller.addLeaf('~'),
+                          )
+                        else if (config is EmptySpaceConfig)
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              '             ',
+                              style: TextStyle(fontSize: 22),
+                            ),
                           ),
                     ],
                   ),
                 ),
+              SizedBox(
+                height: 50,
+                child: Row(
+                  children: [
+                    for (final c in baseKeyboard)
+                      if (c is ToggleAlphabetConfig)
+                        _BasicButton(
+                          flex: 2,
+                          label: controller.alphabetPage ? '123' : 'ABC',
+                          onTap: controller.toggleAlphabetPage,
+                          highlightLevel: 1,
+                        )
+                      else if (c is SpaceButtonConfig)
+                        _BasicButton(
+                          flex: 5,
+                          icon: Icons.space_bar,
+                          onTap: () => controller.addLeaf('~'),
+                        )
+                      else if (c is SubmitButtonConfig)
+                        _BasicButton(
+                          flex: 3,
+                          label: 'Return',
+                          onTap: onSubmit,
+                          highlightLevel: 1,
+                        )
+                      else if (c is PreviousButtonConfig)
+                        _NavigationButton(
+                          flex: c.flex,
+                          icon: Icons.chevron_left_outlined,
+                          onTap: controller.goBack,
+                        )
+                      else if (c is NextButtonConfig)
+                        _NavigationButton(
+                          flex: c.flex,
+                          icon: Icons.chevron_right_rounded,
+                          onTap: controller.goNext,
+                        )
+                  ],
+                ),
+              )
             ],
           );
         },
@@ -386,11 +476,12 @@ class _Buttons extends StatelessWidget {
 /// Widget displaying a single keyboard button.
 class _BasicButton extends StatelessWidget {
   /// Constructs a [_BasicButton].
-  const _BasicButton({
+  _BasicButton({
     Key? key,
     required this.flex,
     this.label,
     this.icon,
+    this.iconColor,
     this.onTap,
     this.asTex = false,
     this.highlightLevel = 0,
@@ -415,20 +506,26 @@ class _BasicButton extends StatelessWidget {
   /// Whether this button should be highlighted.
   final int highlightLevel;
 
+  /// icon color
+  final Color? iconColor;
+
+  /// default text color
+  final Color textColor = Color(0xff424242);
+
   @override
   Widget build(BuildContext context) {
     Widget result;
     if (label == null) {
       result = Icon(
         icon,
-        color: Colors.white,
+        color: iconColor ?? textColor,
       );
     } else if (asTex) {
       result = Math.tex(
         label!,
         options: MathOptions(
-          fontSize: 22,
-          color: Colors.white,
+          fontSize: 18,
+          color: textColor,
         ),
       );
     } else {
@@ -441,9 +538,9 @@ class _BasicButton extends StatelessWidget {
 
       result = Text(
         symbol!,
-        style: const TextStyle(
-          fontSize: 22,
-          color: Colors.white,
+        style: TextStyle(
+          fontSize: 18,
+          color: textColor,
         ),
       );
     }
@@ -451,10 +548,10 @@ class _BasicButton extends StatelessWidget {
     result = KeyboardButton(
       onTap: onTap,
       color: highlightLevel > 1
-          ? Theme.of(context).colorScheme.secondary
+          ? KColor.highlight3
           : highlightLevel == 1
-              ? Colors.grey[900]
-              : null,
+              ? KColor.highlight2
+              : KColor.highlight1,
       child: result,
     );
 
@@ -474,6 +571,8 @@ class _NavigationButton extends StatelessWidget {
     this.icon,
     this.iconSize = 36,
     this.onTap,
+    this.imagePath,
+    this.color,
   }) : super(key: key);
 
   /// The flexible flex value.
@@ -488,6 +587,12 @@ class _NavigationButton extends StatelessWidget {
   /// Function used when user holds the button down.
   final VoidCallback? onTap;
 
+  /// asset image path
+  final String? imagePath;
+
+  /// button color
+  final Color? color;
+
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -495,12 +600,19 @@ class _NavigationButton extends StatelessWidget {
       child: KeyboardButton(
         onTap: onTap,
         onHold: onTap,
-        color: Colors.grey[900],
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: iconSize,
-        ),
+        color: color ?? KColor.highlight2,
+        child: imagePath == null
+            ? Icon(
+                icon,
+                color: KColor.textColor,
+                size: iconSize,
+              )
+            : Image.asset(
+                imagePath!,
+                cacheWidth: 30,
+                cacheHeight: 30,
+                fit: BoxFit.contain,
+              ),
       ),
     );
   }

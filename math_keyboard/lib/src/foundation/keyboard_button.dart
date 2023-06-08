@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:math_keyboard/src/foundation/node.dart';
+import 'package:math_keyboard/src/widgets/keyboard_button.dart';
 
 /// Class representing a button configuration.
 abstract class KeyboardButtonConfig {
@@ -86,6 +87,36 @@ class PageButtonConfig extends KeyboardButtonConfig {
   const PageButtonConfig({int? flex}) : super(flex: flex);
 }
 
+/// Class representing a button configuration of the space Button.
+class SpaceButtonConfig extends KeyboardButtonConfig {
+  /// Constructs a [SpaceButtonConfig].
+  const SpaceButtonConfig({int? flex}) : super(flex: flex);
+}
+
+/// Class representing a button configuration of the empty space
+class EmptySpaceConfig extends KeyboardButtonConfig {
+  /// Constructs a [EmptySpaceConfig]
+  const EmptySpaceConfig({int? flex}) : super(flex: flex);
+}
+
+/// Class representing a button configuration of the uppercase toggle
+class UppercaseConfig extends KeyboardButtonConfig {
+  /// Constructs a [UppercaseConfig]
+  const UppercaseConfig({int? flex}) : super(flex: flex);
+}
+
+/// Class representing a button configuration of the alphabet and numeric toggle
+class ToggleAlphabetConfig extends KeyboardButtonConfig {
+  /// Constructs a [ToggleAlphabetConfig]
+  const ToggleAlphabetConfig({int? flex}) : super(flex: flex);
+}
+
+/// Class representing a button configuration of the return button
+class ReturnButtonConfig extends KeyboardButtonConfig {
+  /// Constructs a [ReturnButtonConfig]
+  const ReturnButtonConfig({int? flex}) : super(flex: flex);
+}
+
 /// List of keyboard button configs for the digits from 0-9.
 ///
 /// List access from 0 to 9 will return the appropriate digit button.
@@ -102,19 +133,189 @@ const _decimalButton = BasicKeyboardButtonConfig(
   label: '.',
   value: '.',
   keyboardCharacters: ['.', ','],
-  highlighted: true,
 );
 
 const _subtractButton = BasicKeyboardButtonConfig(
   label: '−',
   value: '-',
   keyboardCharacters: ['-'],
-  highlighted: true,
 );
+
+BasicKeyboardButtonConfig _buildAlphabetBtn(String alphabet) {
+  return BasicKeyboardButtonConfig(label: alphabet, value: alphabet);
+}
+
+/// alphabet keyboard
+final alphabetKeyboard = [
+  [
+    _buildAlphabetBtn('q'),
+    _buildAlphabetBtn('w'),
+    _buildAlphabetBtn('e'),
+    _buildAlphabetBtn('r'),
+    _buildAlphabetBtn('t'),
+    _buildAlphabetBtn('y'),
+    _buildAlphabetBtn('u'),
+    _buildAlphabetBtn('i'),
+    _buildAlphabetBtn('o'),
+    _buildAlphabetBtn('p'),
+  ],
+  [
+    // EmptySpaceConfig(),
+    _buildAlphabetBtn('a'),
+    _buildAlphabetBtn('s'),
+    _buildAlphabetBtn('d'),
+    _buildAlphabetBtn('f'),
+    _buildAlphabetBtn('g'),
+    _buildAlphabetBtn('h'),
+    _buildAlphabetBtn('j'),
+    _buildAlphabetBtn('k'),
+    _buildAlphabetBtn('l'),
+    // EmptySpaceConfig(),
+  ],
+  [
+    UppercaseConfig(),
+    _buildAlphabetBtn('z'),
+    _buildAlphabetBtn('x'),
+    _buildAlphabetBtn('c'),
+    _buildAlphabetBtn('v'),
+    _buildAlphabetBtn('b'),
+    _buildAlphabetBtn('n'),
+    _buildAlphabetBtn('m'),
+    DeleteButtonConfig(),
+  ],
+];
+
+/// Keyboard showing toggle abc, space and return
+final baseKeyboard = [
+  ToggleAlphabetConfig(),
+  PreviousButtonConfig(),
+  SpaceButtonConfig(),
+  NextButtonConfig(),
+  SubmitButtonConfig(flex: 2)
+];
 
 /// Keyboard showing extended functionality.
 final functionKeyboard = [
   [
+    _digitButtons[1],
+    _digitButtons[2],
+    _digitButtons[3],
+    _digitButtons[4],
+    _digitButtons[5],
+    _digitButtons[6],
+    _digitButtons[7],
+    _digitButtons[8],
+    _digitButtons[9],
+    _digitButtons[0],
+  ],
+  [
+    const BasicKeyboardButtonConfig(
+      label: '÷',
+      value: r'\frac',
+      keyboardCharacters: ['/'],
+      args: [TeXArg.braces, TeXArg.braces],
+    ),
+    const BasicKeyboardButtonConfig(
+      label: '×',
+      value: r'\cdot',
+      keyboardCharacters: ['*'],
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\$',
+      value: r'\$',
+      keyboardCharacters: ['\$'],
+      asTex: true,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: '\u00A2',
+      value: '\u00A2',
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\ell',
+      value: r'\ell',
+      asTex: true,
+    ),
+    const BasicKeyboardButtonConfig(label: r'\pi', value: r'\pi', asTex: true),
+    const BasicKeyboardButtonConfig(
+      label: r'\lt',
+      value: r'\lt',
+      asTex: true,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\gt',
+      value: r'\gt',
+      asTex: true,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\le',
+      value: r'\le',
+      asTex: true,
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\ge',
+      value: r'\ge',
+      asTex: true,
+    ),
+  ],
+  [
+    const PageButtonConfig(),
+    _buildAlphabetBtn('='),
+    _buildAlphabetBtn(':'),
+
+    /// degree
+    const BasicKeyboardButtonConfig(
+      label: '\u00B0',
+      value: '\u00B0',
+    ),
+    _buildAlphabetBtn(','),
+    _decimalButton,
+    DeleteButtonConfig(),
+  ],
+  // [
+  //   const PageButtonConfig(flex: 3),
+
+  //   DeleteButtonConfig(),
+  // ],
+];
+
+/// Standard keyboard for math expression input.
+final standardKeyboard = [
+  [
+    _digitButtons[1],
+    _digitButtons[2],
+    _digitButtons[3],
+    _digitButtons[4],
+    _digitButtons[5],
+    _digitButtons[6],
+    _digitButtons[7],
+    _digitButtons[8],
+    _digitButtons[9],
+    _digitButtons[0],
+  ],
+  [
+    const BasicKeyboardButtonConfig(
+      label: '+',
+      value: '+',
+      keyboardCharacters: ['+'],
+    ),
+    _subtractButton,
+    const BasicKeyboardButtonConfig(
+      label: '(',
+      value: '(',
+      keyboardCharacters: ['('],
+    ),
+    const BasicKeyboardButtonConfig(
+      label: ')',
+      value: ')',
+      keyboardCharacters: [')'],
+    ),
+    const BasicKeyboardButtonConfig(
+      label: r'\sqrt{\Box}',
+      value: r'\sqrt',
+      args: [TeXArg.braces],
+      asTex: true,
+      keyboardCharacters: ['r'],
+    ),
     const BasicKeyboardButtonConfig(
       label: r'\frac{\Box}{\Box}',
       value: r'\frac',
@@ -140,135 +341,27 @@ final functionKeyboard = [
         'Dead',
       ],
     ),
-    const BasicKeyboardButtonConfig(
-      label: r'\sin',
-      value: r'\sin(',
-      asTex: true,
-      keyboardCharacters: ['s'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\sin^{-1}',
-      value: r'\sin^{-1}(',
-      asTex: true,
-    ),
-  ],
-  [
-    const BasicKeyboardButtonConfig(
-      label: r'\sqrt{\Box}',
-      value: r'\sqrt',
-      args: [TeXArg.braces],
-      asTex: true,
-      keyboardCharacters: ['r'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\sqrt[\Box]{\Box}',
-      value: r'\sqrt',
-      args: [TeXArg.brackets, TeXArg.braces],
-      asTex: true,
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\cos',
-      value: r'\cos(',
-      asTex: true,
-      keyboardCharacters: ['c'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\cos^{-1}',
-      value: r'\cos^{-1}(',
-      asTex: true,
-    ),
-  ],
-  [
-    const BasicKeyboardButtonConfig(
-      label: r'\log_{\Box}(\Box)',
-      value: r'\log_',
-      asTex: true,
-      args: [TeXArg.braces, TeXArg.parentheses],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\ln(\Box)',
-      value: r'\ln(',
-      asTex: true,
-      keyboardCharacters: ['l'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\tan',
-      value: r'\tan(',
-      asTex: true,
-      keyboardCharacters: ['t'],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: r'\tan^{-1}',
-      value: r'\tan^{-1}(',
-      asTex: true,
-    ),
-  ],
-  [
-    const PageButtonConfig(flex: 3),
-    const BasicKeyboardButtonConfig(
-      label: '(',
-      value: '(',
-      highlighted: true,
-      keyboardCharacters: ['('],
-    ),
-    const BasicKeyboardButtonConfig(
-      label: ')',
-      value: ')',
-      highlighted: true,
-      keyboardCharacters: [')'],
-    ),
-    PreviousButtonConfig(),
-    NextButtonConfig(),
-    DeleteButtonConfig(),
-  ],
-];
-
-/// Standard keyboard for math expression input.
-final standardKeyboard = [
-  [
-    _digitButtons[7],
-    _digitButtons[8],
-    _digitButtons[9],
-    const BasicKeyboardButtonConfig(
-      label: '×',
-      value: r'\cdot',
-      keyboardCharacters: ['*'],
-      highlighted: true,
-    ),
-    const BasicKeyboardButtonConfig(
-      label: '÷',
-      value: r'\frac',
-      keyboardCharacters: ['/'],
-      args: [TeXArg.braces, TeXArg.braces],
-      highlighted: true,
-    ),
-  ],
-  [
-    _digitButtons[4],
-    _digitButtons[5],
-    _digitButtons[6],
-    const BasicKeyboardButtonConfig(
-      label: '+',
-      value: '+',
-      keyboardCharacters: ['+'],
-      highlighted: true,
-    ),
-    _subtractButton,
-  ],
-  [
-    _digitButtons[1],
-    _digitButtons[2],
-    _digitButtons[3],
-    _decimalButton,
-    DeleteButtonConfig(),
   ],
   [
     const PageButtonConfig(),
-    _digitButtons[0],
-    PreviousButtonConfig(),
-    NextButtonConfig(),
-    SubmitButtonConfig(),
+    _buildAlphabetBtn('='),
+    _buildAlphabetBtn(':'),
+
+    /// degree
+    const BasicKeyboardButtonConfig(
+      label: '\u00B0',
+      value: '\u00B0',
+    ),
+    _buildAlphabetBtn(','),
+    _decimalButton,
+    DeleteButtonConfig(),
   ],
+  // [
+  //   const PageButtonConfig(),
+  //   PreviousButtonConfig(),
+  //   NextButtonConfig(),
+  //   SubmitButtonConfig(),
+  // ],
 ];
 
 /// Keyboard getting shown for number input only.

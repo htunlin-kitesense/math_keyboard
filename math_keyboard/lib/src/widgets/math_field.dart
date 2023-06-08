@@ -649,6 +649,12 @@ class MathFieldEditingController extends ChangeNotifier {
   /// Type of the Keyboard.
   bool secondPage = false;
 
+  /// Type of the keyboard is alphabet or not
+  bool alphabetPage = false;
+
+  /// toggle uppercase status
+  bool isUpperCase = false;
+
   /// The root node of the expression.
   TeXNode root = TeXNode(null);
 
@@ -844,7 +850,7 @@ class MathFieldEditingController extends ChangeNotifier {
     final operators = ['+', '-', r'\cdot', r'\div'];
     // We need to determine whether we want to append an empty fraction or
     // divide the last expression, therefore keep it as the numerator.
-    var keepNumerator = true;
+    var keepNumerator = false;
     // There are 3 cases where we want to append a clean fraction, and therefore
     // don't keep a numerator.
     // CASE 1: The current node is empty.
@@ -948,6 +954,16 @@ class MathFieldEditingController extends ChangeNotifier {
   /// Switches between Page 1 and 2.
   void togglePage() {
     secondPage = !secondPage;
+    notifyListeners();
+  }
+
+  void toggleUpperCase() {
+    isUpperCase = !isUpperCase;
+    notifyListeners();
+  }
+
+  void toggleAlphabetPage() {
+    alphabetPage = !alphabetPage;
     notifyListeners();
   }
 

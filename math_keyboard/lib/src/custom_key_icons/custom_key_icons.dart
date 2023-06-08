@@ -15,3 +15,19 @@ class CustomKeyIcons {
   static const IconData key_symbols =
       IconData(0xe800, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }
+
+/// A collection of custom icon image
+class CustomIconImage {
+  /// shift icon toggle alphabet and numeric
+  static const shiftIcon = './assets/icons/shift.png';
+
+  /// symbol icon toggle more symbols
+  static const symbolIcon = './assets/icons/symbols.png';
+}
+
+class KColor {
+  static const highlight1 = Color(0xffE0E0E0);
+  static const highlight2 = Color(0xffBDBDBD);
+  static const highlight3 = Color(0xff616161);
+  static const textColor = Color(0xff424242);
+}
